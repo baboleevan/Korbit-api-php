@@ -1,5 +1,5 @@
 # Korbit-api-php
-https://www.korbit.co.kr/ 의 PHP용 API입니다. #bitcoin #api #korbit
+https://www.korbit.co.kr/ 의 PHP용 API입니다.
 
 ## 사용법
 1. API 파일안의 $key와 $secret값을 여러분들의 값으로 바꿔주세요.
