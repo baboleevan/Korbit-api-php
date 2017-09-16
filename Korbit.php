@@ -208,6 +208,57 @@ class Korbit {
 	}
 
 	/**
+	 * set_access_token
+	 *
+	 * 인증
+	 *
+	 * @param   array       $param
+	 *          string      $param['username']      E-Mail
+	 *          string      $param['password']      password
+	 * @param   array       $access_token_data
+	 *
+	 * @return  array       $data
+	 */
+	public function set_access_token ($param,$access_token_data = array()) {
+		$time = time();
+		$data = array();
+		$response = array();
+
+		if (
+			isset($access_token_data['token_type'],$access_token_data['access_token'],$access_token_data['expires_in'],$access_token_data['expires_time'],$access_token_data['refresh_token']) &&
+			$access_token_data['expires_time'] > $time
+		) {
+			if ($access_token_data['expires_time'] > ($time + 60)) {
+				$data = $this->access_token = $access_token_data;
+			} else {
+				$param['client_id'] = $this->key;
+				$param['client_secret'] = $this->secret;
+				$param['refresh_token'] = $access_token_data['refresh_token'];
+				$param['grant_type'] = 'refresh_token';
+
+				$response = $this->_post('v1/oauth2/access_token',$param);
+			}
+		} else {
+			$param['client_id'] = $this->key;
+			$param['client_secret'] = $this->secret;
+			$param['grant_type'] = 'password';
+
+			$response = $this->_post('v1/oauth2/access_token',$param);
+		}
+
+		if (isset($response['response']['http_code']) && $response['response']['http_code'] == 200) {
+			$data = $response['html'];
+
+			if (isset($data['access_token'])) {
+				$data['expires_time'] = $time + $data['expires_in'];
+				$this->access_token = $data;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
 	 * get_user_info
 	 *
 	 * 사용자 정보 가져오기
@@ -249,7 +300,7 @@ class Korbit {
 	 * 최종 체결 가격
 	 *
 	 * @param   array       $param
-	 *          string      $param['currecy_pair']      btc_krw (비트코인) / etc_krw (이더리움 클래식) / eth_krw (이더리움) / xrp_krw (리플)
+	 *          string      $param['currency_pair']     btc_krw (비트코인) / etc_krw (이더리움 클래식) / eth_krw (이더리움) / xrp_krw (리플)
 	 *
 	 * @return  array       $data
 	 *          int         $data['timestamp']          최종 체결 시각.
@@ -598,6 +649,7 @@ class Korbit {
 	 * get_user_wallet
 	 *
 	 * 사용자 : 비트코인지갑 정보 가져오기
+	 * 17.08.16 정지
 	 *
 	 * @param   array       $param
 	 *          string      $param['currency_pair']                 btc_krw (비트코인) / etc_krw (이더리움 클래식) / eth_krw (이더리움) / xrp_krw (리플)
@@ -634,6 +686,48 @@ class Korbit {
 
 		if (isset($this->access_token['access_token'])) {
 			$response = $this->_get('v1/user/wallet',$param);
+			if (isset($response['response']['http_code']) && $response['response']['http_code'] == 200) {
+				$data = $response['html'];
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * get_user_accounts
+	 *
+	 * 지갑 정보 조회
+	 * 17.08.16 +
+	 *
+	 * @return  array       $data
+	 */
+	public function get_user_accounts () {
+		$data = array();
+
+		if (isset($this->access_token['access_token'])) {
+			$response = $this->_get('v1/user/accounts');
+			if (isset($response['response']['http_code']) && $response['response']['http_code'] == 200) {
+				$data = $response['html'];
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * get_user_balances
+	 *
+	 * 지갑 잔고 조회
+	 * 17.08.16 +
+	 *
+	 * @return  array       $data
+	 */
+	public function get_user_balances () {
+		$data = array();
+
+		if (isset($this->access_token['access_token'])) {
+			$response = $this->_get('v1/user/balances');
 			if (isset($response['response']['http_code']) && $response['response']['http_code'] == 200) {
 				$data = $response['html'];
 			}
